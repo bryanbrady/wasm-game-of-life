@@ -12,14 +12,6 @@ use fixedbitset::FixedBitSet;
 #[global_allocator]
 static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
 
-// #[wasm_bindgen]
-// #[repr(u8)]
-// #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-// pub enum Cell {
-//     Dead = 0,
-//     Alive = 1,
-// }
-
 #[wasm_bindgen]
 pub struct Universe {
     width: u32,
@@ -75,8 +67,6 @@ impl Universe {
 
     pub fn new(w: u32, h: u32) -> Universe {
         utils::set_panic_hook();
-        // let width = 256;
-        // let height = 256;
         let width = w;
         let height = h;
         let size = (width * height) as usize;
@@ -103,5 +93,10 @@ impl Universe {
 
     pub fn cells(&self) -> *const u32 {
         self.cells.as_slice().as_ptr()
+    }
+
+    pub fn toggle_cell(&mut self, row: u32, col: u32) {
+       let idx = self.get_index(row, col);
+       self.cells.set(idx, !self.cells[idx]);
     }
 }
