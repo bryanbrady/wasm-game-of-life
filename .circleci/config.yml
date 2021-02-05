@@ -1,0 +1,13 @@
+version: 2
+jobs:
+  build:
+    docker:
+      - image: bbrady/rust-wasm-builder:0.0.0
+
+    steps:
+      - checkout
+      - add_ssh_keys:
+          fingerprints:
+            - "8e:39:be:e6:da:39:d0:b7:72:92:fc:e3:6c:ec:3c:b4"
+      - run:
+          .circleci/deploy.sh
