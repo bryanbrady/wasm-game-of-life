@@ -153,7 +153,6 @@ document.addEventListener("keyup", event => {
 });
 
 
-
 canvas.addEventListener("click", event => {
   const boundingRect = canvas.getBoundingClientRect();
 
@@ -183,6 +182,46 @@ canvas.addEventListener("click", event => {
   drawCells();
 });
 
+
+var mousePressed = false;
+canvas.addEventListener("mousedown", event => {
+  mousePressed = true;
+});
+
+canvas.addEventListener("mouseup", event => {
+  mousePressed = false;
+});
+
+canvas.addEventListener("mousemove", event => {
+  if (mousePressed) {
+    const boundingRect = canvas.getBoundingClientRect();
+
+    const scaleX = canvas.width / boundingRect.width;
+    const scaleY = canvas.height / boundingRect.height;
+
+    const canvasLeft = (event.clientX - boundingRect.left) * scaleX;
+    const canvasTop = (event.clientY - boundingRect.top) * scaleY;
+
+    const row = Math.min(Math.floor(canvasTop / (CELL_SIZE + 1)), height - 1);
+    const col = Math.min(Math.floor(canvasLeft / (CELL_SIZE + 1)), width - 1);
+
+    console.log("row",row,"col",col);
+
+    if (ctrlPressed) {
+      universe.toggle_cell(row-1, col-1);
+      universe.toggle_cell(row, col);
+      universe.toggle_cell(row, col+1);
+      universe.toggle_cell(row+1, col-1);
+      universe.toggle_cell(row+1, col);
+    }
+    else {
+      universe.toggle_cell(row, col);
+    }
+
+    drawGrid();
+    drawCells();
+  }
+});
 drawGrid();
 drawCells();
 requestAnimationFrame(renderLoop);
