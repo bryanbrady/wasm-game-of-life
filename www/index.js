@@ -14,7 +14,7 @@ const frame_height = window.innerHeight|| document.documentElement.clientHeight|
 
 // Construct the universe, and get its width and height.
 const divider = 6;
-const universe = Universe.new((frame_width-4*divider)/divider, (frame_height-4*divider)/divider);
+const universe = Universe.new((frame_width-4*divider)/divider, (frame_height-8*divider)/divider);
 const width = universe.width();
 const height = universe.height();
 
@@ -26,6 +26,7 @@ canvas.width = (CELL_SIZE + 1) * width + 1;
 
 const ctx = canvas.getContext('2d');
 
+let animationId = null;
 const renderLoop = () => {
   //fps.render();
 
@@ -33,8 +34,34 @@ const renderLoop = () => {
   drawGrid();
   drawCells();
 
-  requestAnimationFrame(renderLoop);
+  animationId = requestAnimationFrame(renderLoop);
 };
+
+const isPaused = () => {
+  return animationId === null;
+}
+
+const playPauseButton = document.getElementById("play-pause");
+const play = () => {
+  playPauseButton.textContent = "⏸";
+  renderLoop();
+};
+
+const pause = () => {
+  playPauseButton.textContent = "▶";
+  cancelAnimationFrame(animationId);
+  animationId = null;
+};
+
+playPauseButton.addEventListener("click", event => {
+  if (isPaused()) {
+    play();
+  } else {
+    pause();
+  }
+});
+
+
 
 const drawGrid = () => {
   ctx.beginPath();
@@ -139,47 +166,23 @@ max of last 100 = ${Math.round(max)}
 };
 
 var ctrlPressed = false;
+var shiftPressed = false;
 
 document.addEventListener("keydown", event => {
-  if (event.key == "Control") {
-    ctrlPressed = true;
+  switch (event.key) {
+    case "Control": ctrlPressed = true; break;
+    case "Shift": shiftPressed = true; break;
+    default: break;
   }
 });
 
 document.addEventListener("keyup", event => {
-  if (event.key == "Control") {
-    ctrlPressed = false;
+  switch (event.key) {
+    case "Control": ctrlPressed = false; break;
+    case "Shift": shiftPressed = false; break;
+    default: break;
   }
 });
-
-
-canvas.addEventListener("click", event => {
-  const boundingRect = canvas.getBoundingClientRect();
-
-  const scaleX = canvas.width / boundingRect.width;
-  const scaleY = canvas.height / boundingRect.height;
-
-  const canvasLeft = (event.clientX - boundingRect.left) * scaleX;
-  const canvasTop = (event.clientY - boundingRect.top) * scaleY;
-
-  const row = Math.min(Math.floor(canvasTop / (CELL_SIZE + 1)), height - 1);
-  const col = Math.min(Math.floor(canvasLeft / (CELL_SIZE + 1)), width - 1);
-
-  if (ctrlPressed) {
-    universe.toggle_cell(row-1, col-1);
-    universe.toggle_cell(row, col);
-    universe.toggle_cell(row, col+1);
-    universe.toggle_cell(row+1, col-1);
-    universe.toggle_cell(row+1, col);
-  }
-  else {
-    universe.toggle_cell(row, col);
-  }
-
-  drawGrid();
-  drawCells();
-});
-
 
 var mousePressed = false;
 canvas.addEventListener("mousedown", event => {
@@ -190,15 +193,28 @@ canvas.addEventListener("mouseup", event => {
   mousePressed = false;
 });
 
+canvas.addEventListener("click", event => {
+  updateGrid(event);
+  drawGrid();
+  drawCells();
+});
+
 canvas.addEventListener("mousemove", event => {
   if (mousePressed) {
+    updateGrid(event);
+    drawGrid();
+    drawCells();
+  }
+});
+
+const updateGrid = e => {
     const boundingRect = canvas.getBoundingClientRect();
 
     const scaleX = canvas.width / boundingRect.width;
     const scaleY = canvas.height / boundingRect.height;
 
-    const canvasLeft = (event.clientX - boundingRect.left) * scaleX;
-    const canvasTop = (event.clientY - boundingRect.top) * scaleY;
+    const canvasLeft = (e.clientX - boundingRect.left) * scaleX;
+    const canvasTop = (e.clientY - boundingRect.top) * scaleY;
 
     const row = Math.min(Math.floor(canvasTop / (CELL_SIZE + 1)), height - 1);
     const col = Math.min(Math.floor(canvasLeft / (CELL_SIZE + 1)), width - 1);
@@ -210,14 +226,20 @@ canvas.addEventListener("mousemove", event => {
       universe.toggle_cell(row+1, col-1);
       universe.toggle_cell(row+1, col);
     }
+    else if (shiftPressed) {
+      let N = 50;
+      for (let i = -N; i <= 3; i++) {
+        for (let j = -N; j <= 3; j++) {
+          universe.set_cell(row+(i + height), col+(j + width));
+        }
+      }
+    }
     else {
       universe.toggle_cell(row, col);
     }
 
-    drawGrid();
-    drawCells();
-  }
-});
+}
+
 drawGrid();
 drawCells();
-requestAnimationFrame(renderLoop);
+play();

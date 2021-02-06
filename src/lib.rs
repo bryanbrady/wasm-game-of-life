@@ -12,6 +12,18 @@ use fixedbitset::FixedBitSet;
 #[global_allocator]
 static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
 
+#[wasm_bindgen(start)]
+extern "C" {
+    #[wasm_bindgen(js_namespace = console)]
+    fn log(s: &str);
+}
+
+macro_rules! console_log {
+    // Note that this is using the `log` function imported above during
+    // `bare_bones`
+    ($($t:tt)*) => (log(&format_args!($($t)*).to_string()))
+}
+
 #[wasm_bindgen]
 pub struct Universe {
     width: u32,
@@ -96,7 +108,23 @@ impl Universe {
     }
 
     pub fn toggle_cell(&mut self, row: u32, col: u32) {
-       let idx = self.get_index(row, col);
+       let r = row % self.height;
+       let c = col % self.width;
+       let idx = self.get_index(r, c);
        self.cells.set(idx, !self.cells[idx]);
+    }
+
+    pub fn set_cell(&mut self, row: u32, col: u32) {
+       let r = row % self.height;
+       let c = col % self.width;
+       let idx = self.get_index(r, c);
+       self.cells.set(idx, true);
+    }
+
+    pub fn unset_cell(&mut self, row: u32, col: u32) {
+       let r = row % self.height;
+       let c = col % self.width;
+       let idx = self.get_index(r, c);
+       self.cells.set(idx, false);
     }
 }
